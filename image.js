@@ -1,3 +1,6 @@
+const DEFAULT_IMAGE_WIDTH = 800;
+const N_TILES = 2;
+
 const artworkUrlById = (
   id,
   fields = ["id", "title", "artist_id", "artist_title", "image_id"]
@@ -7,11 +10,18 @@ const artworkUrlById = (
 };
 
 const artworkSiteUrl = (id) => `https://www.artic.edu/artworks/${id}`;
+
 const artistSiteUrl = (artist_id) =>
   `https://www.artic.edu/artists/${artist_id}`;
+
 const infoJsonUrl = (image_id) =>
   `https://www.artic.edu/iiif/2/${image_id}/info.json`;
-const iiifUrl = (image_id, region = "full", dimension = "800,") =>
+
+const iiifUrl = (
+  image_id,
+  region = "full",
+  dimension = `${DEFAULT_IMAGE_WIDTH},`
+) =>
   `https://www.artic.edu/iiif/2/${image_id}/${region}/${dimension}/0/default.jpg`;
 
 const updateTitle = (id, title, artist_id, artist_title) => {
@@ -33,7 +43,30 @@ const updateTitle = (id, title, artist_id, artist_title) => {
   titleEl.appendChild(artistLinkEl);
 };
 
-const imageUrl = async (image_id, idealSide = 800) => {
+const getTileParams = (n, x, y) => {
+  rows = Array.from(Array(n).keys());
+  cols = Array.from(Array(n).keys());
+
+  const tiles = [];
+  for (const row of rows) {
+    for (const col of cols) {
+      tiles.push([(col * x) / n, (row * y) / n, x / n, y / n]);
+    }
+  }
+
+  return tiles;
+};
+
+const generateTileUrls = (image_id, n, x, y) =>
+  getTileParams(n, x, y).map((t) =>
+    iiifUrl(image_id, `pct:${t.join(",")}`, `${DEFAULT_IMAGE_WIDTH / n},`)
+  );
+
+const getImageUrls = async (
+  image_id,
+  n_tiles,
+  idealSide = DEFAULT_IMAGE_WIDTH
+) => {
   // get full dimensions from info.json
   const { width, height } = await fetch(infoJsonUrl(image_id)).then((res) =>
     res.json()
@@ -55,17 +88,23 @@ const imageUrl = async (image_id, idealSide = 800) => {
     requestCoords["y"] = (maxSide / idealSide) * 100;
   }
 
-  const region = `pct:${[0, 0, requestCoords.x, requestCoords.y].join(",")}`;
-  return iiifUrl(image_id, region);
+  return generateTileUrls(image_id, n_tiles, requestCoords.x, requestCoords.y);
+};
+
+const displayTiles = async (image_id, n_tiles) => {
+  document.documentElement.style.setProperty("--tiles", n_tiles);
+  const imageUrls = await getImageUrls(image_id, n_tiles);
+  const puzzleEl = document.getElementById("puzzle");
+  imageUrls.forEach((src) => {
+    const imageEl = document.createElement("img");
+    imageEl.setAttribute("src", src);
+    puzzleEl.appendChild(imageEl);
+  });
 };
 
 fetch(artworkUrlById(80607))
   .then((response) => response.json())
   .then(async ({ data }) => {
     updateTitle(data.id, data.title, data.artist_id, data.artist_title);
-
-    const imageEl = document.createElement("img");
-    imageEl.setAttribute("src", await imageUrl(data.image_id));
-    const puzzleEl = document.getElementById("puzzle");
-    puzzleEl.appendChild(imageEl);
+    displayTiles(data.image_id, N_TILES);
   });
