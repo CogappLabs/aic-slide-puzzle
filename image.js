@@ -1,6 +1,6 @@
-const DEFAULT_IMAGE_WIDTH = 800;
-const MODES = ["Easy", "Medium", "Expert"];
-const N_TILES_OPTIONS = [2, 4, 8];
+const IMAGE_WIDTH = 600;
+const MODES = ["Baby", "Toddler", "Teenager", "Adult", "Retired"];
+const N_TILES_OPTIONS = [2, 3, 4, 5, 6];
 const N_TILES =
   N_TILES_OPTIONS[Math.floor(Math.random() * N_TILES_OPTIONS.length)];
 const MODE = MODES[N_TILES_OPTIONS.findIndex((mode) => mode == N_TILES)];
@@ -51,11 +51,7 @@ const artistSiteUrl = (artist_id) =>
 const infoJsonUrl = (image_id) =>
   `https://www.artic.edu/iiif/2/${image_id}/info.json`;
 
-const iiifUrl = (
-  image_id,
-  region = "full",
-  dimension = `${DEFAULT_IMAGE_WIDTH},`
-) =>
+const iiifUrl = (image_id, region = "full", dimension = `${IMAGE_WIDTH},`) =>
   `https://www.artic.edu/iiif/2/${image_id}/${region}/${dimension}/0/default.jpg`;
 
 const updateTitle = (id, title, artist_id, artist_title) => {
@@ -93,14 +89,10 @@ const getTileParams = (n, x, y) => {
 
 const generateTileUrls = (image_id, n, x, y) =>
   getTileParams(n, x, y).map((t) =>
-    iiifUrl(image_id, `pct:${t.join(",")}`, `${DEFAULT_IMAGE_WIDTH / n},`)
+    iiifUrl(image_id, `pct:${t.join(",")}`, `${IMAGE_WIDTH / n},`)
   );
 
-const getImageUrls = async (
-  image_id,
-  n_tiles,
-  idealSide = DEFAULT_IMAGE_WIDTH
-) => {
+const getImageUrls = async (image_id, n_tiles, idealSide = IMAGE_WIDTH) => {
   // get full dimensions from info.json
   const { width, height } = await fetch(infoJsonUrl(image_id)).then((res) =>
     res.json()
@@ -125,8 +117,9 @@ const getImageUrls = async (
   return generateTileUrls(image_id, n_tiles, requestCoords.x, requestCoords.y);
 };
 
-const displayTiles = async (image_id, n_tiles) => {
+const displayTiles = async (image_id, n_tiles, width) => {
   document.documentElement.style.setProperty("--tiles", n_tiles);
+  document.documentElement.style.setProperty("--width", width);
   const imageUrls = await getImageUrls(image_id, n_tiles);
   const puzzleEl = document.getElementById("puzzle");
   imageUrls.forEach((src, i) => {
@@ -193,11 +186,11 @@ const validCandidates = (dragSrcCoord, n_tiles) => {
   return candidates;
 };
 
-const initPuzzle = (seed, n_tiles) =>
+const initPuzzle = (seed, n_tiles, width) =>
   getRandomArtwork(seed)
     .then(async (data) => {
       updateTitle(data.id, data.title, data.artist_id, data.artist_title);
-      await displayTiles(data.image_id, n_tiles);
+      await displayTiles(data.image_id, n_tiles, width);
     })
     .then(() => shuffle(n_tiles));
 
@@ -304,7 +297,7 @@ const setupDragLogic = (n_tiles) => {
 };
 
 async function main() {
-  await initPuzzle(randomInt(N_ARTWORKS), N_TILES);
+  await initPuzzle(randomInt(N_ARTWORKS), N_TILES, IMAGE_WIDTH);
   updateProgress();
   setupDragLogic(N_TILES);
 }
