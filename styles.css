@@ -93,5 +93,4 @@ main {
 
 .movable {
   width: calc(800 / var(--tiles) * 1px);
-  height: calc(800 / var(--tiles) * 1px);
 }
