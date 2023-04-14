@@ -1,4 +1,5 @@
 const DEFAULT_IMAGE_WIDTH = 800;
+const N_TILES = 4;
 const ARTWORK_IDS = [80607, 118718, 28560, 229393];
 
 const artworkUrlById = (
@@ -91,9 +92,6 @@ const getImageUrls = async (
   return generateTileUrls(image_id, n_tiles, requestCoords.x, requestCoords.y);
 };
 
-const arrayIndexToCoord = (index, n_tiles) =>
-  [index % n_tiles, Math.floor(index / n_tiles)].join(",");
-
 const displayTiles = async (image_id, n_tiles) => {
   document.documentElement.style.setProperty("--tiles", n_tiles);
   const imageUrls = await getImageUrls(image_id, n_tiles);
@@ -102,7 +100,7 @@ const displayTiles = async (image_id, n_tiles) => {
     const imageEl = document.createElement("img");
     imageEl.setAttribute("src", src);
     imageEl.setAttribute("draggable", false);
-    imageEl.setAttribute("data-solved-coord", arrayIndexToCoord(i, n_tiles));
+    imageEl.setAttribute("data-solved-coord", indexToCoord(i, n_tiles));
     puzzleEl.appendChild(imageEl);
   });
 };
@@ -121,8 +119,45 @@ const shuffle = (n_tiles) => {
   });
 
   Array.from(puzzleEl.childNodes).map((el, i) => {
-    el.setAttribute("data-current-coord", arrayIndexToCoord(i, n_tiles));
+    el.setAttribute("data-current-coord", indexToCoord(i, n_tiles));
   });
+};
+
+const parseCoord = (coord) => coord.split(",").map((i) => parseInt(i, 10));
+
+const coordToIndex = (coord, n_tiles) => {
+  const [x, y] = parseCoord(coord);
+  return y * n_tiles + x;
+};
+
+const indexToCoord = (index, n_tiles) =>
+  [index % n_tiles, Math.floor(index / n_tiles)].join(",");
+
+const validCandidates = (dragSrcCoord, n_tiles) => {
+  const [x, y] = parseCoord(dragSrcCoord);
+
+  candidates = [];
+
+  // up
+  if (y > 0) {
+    candidates.push([x, y - 1].join(","));
+  }
+
+  // right
+  if (x < n_tiles) {
+    candidates.push([x + 1, y].join(","));
+  }
+
+  // left
+  if (x > 0) {
+    candidates.push([x - 1, y].join(","));
+  }
+
+  // down
+  if (y < n_tiles) {
+    candidates.push([x, y + 1].join(","));
+  }
+  return candidates;
 };
 
 const initPuzzle = (artworkId, n_tiles) =>
@@ -134,4 +169,82 @@ const initPuzzle = (artworkId, n_tiles) =>
     })
     .then(() => shuffle(n_tiles));
 
-initPuzzle(ARTWORK_IDS[Math.floor(Math.random() * ARTWORK_IDS.length)], 4);
+const swapTiles = (node1, node2) => {
+  const puzzleEl = document.getElementById("puzzle");
+  const node1Coord = node1.getAttribute("data-current-coord");
+  const node2Coord = node2.getAttribute("data-current-coord");
+
+  node1.setAttribute("data-current-coord", node2Coord);
+  node2.setAttribute("data-current-coord", node1Coord);
+  Array.from(puzzleEl.childNodes)
+    .sort(
+      (a, b) =>
+        coordToIndex(a.getAttribute("data-current-coord"), N_TILES) -
+        coordToIndex(b.getAttribute("data-current-coord"), N_TILES)
+    )
+    .map((el) => {
+      puzzleEl.appendChild(el);
+    });
+};
+
+const setupDragLogic = (n_tiles) => {
+  var dragSrcEl = null;
+  var dragSrcCoord = null;
+
+  function handleDragStart(e) {
+    this.style.opacity = "0.4";
+    dragSrcEl = this;
+    dragSrcCoord = dragSrcEl.getAttribute("data-current-coord");
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/html", this.innerHTML);
+  }
+  function handleDragOver(e) {
+    if (e.preventDefault) {
+      e.preventDefault();
+    }
+  }
+  function handleDragEnter(e) {
+    const candidateCoord = this.getAttribute("data-current-coord");
+    if (validCandidates(dragSrcCoord, n_tiles).includes(candidateCoord)) {
+      this.classList.add("over");
+    }
+  }
+  function handleDragLeave(e) {
+    this.classList.remove("over");
+  }
+
+  function handleDrop(e) {
+    if (e.stopPropagation) {
+      e.stopPropagation(); // stops the browser from redirecting.
+    }
+    const candidateCoord = this.getAttribute("data-current-coord");
+    if (validCandidates(dragSrcCoord, n_tiles).includes(candidateCoord)) {
+      swapTiles(dragSrcEl, this);
+    }
+  }
+  function handleDragEnd(e) {
+    this.style.opacity = "1";
+    tiles.forEach(function (tile) {
+      tile.classList.remove("over");
+    });
+  }
+  const tiles = document.querySelectorAll("#puzzle img");
+  tiles.forEach(function (tile) {
+    tile.addEventListener("dragstart", handleDragStart, false);
+    tile.addEventListener("dragenter", handleDragEnter, false);
+    tile.addEventListener("dragover", handleDragOver, false);
+    tile.addEventListener("dragleave", handleDragLeave, false);
+    tile.addEventListener("drop", handleDrop, false);
+    tile.addEventListener("dragend", handleDragEnd, false);
+  });
+};
+
+async function main() {
+  await initPuzzle(
+    ARTWORK_IDS[Math.floor(Math.random() * ARTWORK_IDS.length)],
+    N_TILES
+  );
+  setupDragLogic(N_TILES);
+}
+
+main();
