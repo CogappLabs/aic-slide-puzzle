@@ -187,6 +187,19 @@ const swapTiles = (node1, node2) => {
     });
 };
 
+const updateProgress = () => {
+  const puzzleEl = document.getElementById("puzzle");
+  const tileState = Array.from(puzzleEl.childNodes).map(
+    (el) =>
+      el.getAttribute("data-current-coord") ==
+      el.getAttribute("data-solved-coord")
+  );
+  const total = tileState.length;
+  const totalSolved = tileState.filter(Boolean).length;
+  const progressEl = document.getElementById("progress");
+  progressEl.innerText = `${totalSolved} of ${total} tiles are in the right place.`;
+};
+
 const setupDragLogic = (n_tiles) => {
   var dragSrcEl = null;
   var dragSrcCoord = null;
@@ -220,6 +233,7 @@ const setupDragLogic = (n_tiles) => {
     const candidateCoord = this.getAttribute("data-current-coord");
     if (validCandidates(dragSrcCoord, n_tiles).includes(candidateCoord)) {
       swapTiles(dragSrcEl, this);
+      updateProgress();
     }
   }
   function handleDragEnd(e) {
@@ -244,6 +258,7 @@ async function main() {
     ARTWORK_IDS[Math.floor(Math.random() * ARTWORK_IDS.length)],
     N_TILES
   );
+  updateProgress();
   setupDragLogic(N_TILES);
 }
 
