@@ -187,6 +187,11 @@ const swapTiles = (node1, node2) => {
     });
 };
 
+const showHiddenPiece = () => {
+  const movableTile = document.querySelector("[data-src]");
+  movableTile.setAttribute("src", movableTile.getAttribute("data-src"));
+};
+
 const disablePuzzle = () => {
   const puzzleEl = document.getElementById("puzzle");
   Array.from(puzzleEl.childNodes).map((el) =>
@@ -205,6 +210,7 @@ const updateProgress = () => {
   const totalSolved = tileState.filter(Boolean).length;
   const progressEl = document.getElementById("progress");
   if (totalSolved == total) {
+    showHiddenPiece();
     disablePuzzle();
     progressEl.innerText = "Puzzle solved! You're free to leave...";
   } else {
