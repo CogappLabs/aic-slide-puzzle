@@ -1,5 +1,5 @@
 const DEFAULT_IMAGE_WIDTH = 800;
-const N_TILES = 4;
+const N_TILES = 2;
 const ARTWORK_IDS = [80607, 118718, 28560, 229393];
 
 const artworkUrlById = (
@@ -187,6 +187,13 @@ const swapTiles = (node1, node2) => {
     });
 };
 
+const disablePuzzle = () => {
+  const puzzleEl = document.getElementById("puzzle");
+  Array.from(puzzleEl.childNodes).map((el) =>
+    el.setAttribute("draggable", false)
+  );
+};
+
 const updateProgress = () => {
   const puzzleEl = document.getElementById("puzzle");
   const tileState = Array.from(puzzleEl.childNodes).map(
@@ -197,7 +204,12 @@ const updateProgress = () => {
   const total = tileState.length;
   const totalSolved = tileState.filter(Boolean).length;
   const progressEl = document.getElementById("progress");
-  progressEl.innerText = `${totalSolved} of ${total} tiles are in the right place.`;
+  if (totalSolved == total) {
+    disablePuzzle();
+    progressEl.innerText = "Puzzle solved! You're free to leave...";
+  } else {
+    progressEl.innerText = `${totalSolved} of ${total} tiles are in the right place.`;
+  }
 };
 
 const setupDragLogic = (n_tiles) => {
