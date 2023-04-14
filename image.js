@@ -1,5 +1,5 @@
 const DEFAULT_IMAGE_WIDTH = 800;
-const N_TILES = 2;
+const ARTWORK_IDS = [80607, 118718, 28560, 229393];
 
 const artworkUrlById = (
   id,
@@ -91,20 +91,41 @@ const getImageUrls = async (
   return generateTileUrls(image_id, n_tiles, requestCoords.x, requestCoords.y);
 };
 
+const arrayIndexToCoord = (index, n_tiles) =>
+  `${Math.floor(index / n_tiles)},${Math.floor(index % n_tiles)}`;
+
 const displayTiles = async (image_id, n_tiles) => {
   document.documentElement.style.setProperty("--tiles", n_tiles);
   const imageUrls = await getImageUrls(image_id, n_tiles);
   const puzzleEl = document.getElementById("puzzle");
-  imageUrls.forEach((src) => {
+  imageUrls.forEach((src, i) => {
     const imageEl = document.createElement("img");
     imageEl.setAttribute("src", src);
+    imageEl.setAttribute("data-solved-coord", arrayIndexToCoord(i, n_tiles));
     puzzleEl.appendChild(imageEl);
   });
 };
 
-fetch(artworkUrlById(80607))
-  .then((response) => response.json())
-  .then(async ({ data }) => {
-    updateTitle(data.id, data.title, data.artist_id, data.artist_title);
-    displayTiles(data.image_id, N_TILES);
-  });
+const shuffle = () => {
+  const puzzleEl = document.getElementById("puzzle");
+  // remove the last one as we need a blank space
+  const movableTile = puzzleEl.lastChild;
+  movableTile.setAttribute("data-src", movableTile.src);
+  movableTile.setAttribute("src", "logo.png");
+  movableTile.classList.add("movable");
+
+  Array.from(puzzleEl.childNodes).map((el, i) =>
+    puzzleEl.appendChild(puzzleEl.childNodes[Math.floor(Math.random() * i)])
+  );
+};
+
+const initPuzzle = (artworkId, n_tiles) =>
+  fetch(artworkUrlById(artworkId))
+    .then((response) => response.json())
+    .then(async ({ data }) => {
+      updateTitle(data.id, data.title, data.artist_id, data.artist_title);
+      await displayTiles(data.image_id, n_tiles);
+    })
+    .then(shuffle);
+
+initPuzzle(ARTWORK_IDS[Math.floor(Math.random() * ARTWORK_IDS.length)], 4);

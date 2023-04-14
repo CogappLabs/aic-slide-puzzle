@@ -90,3 +90,8 @@ main {
   display: grid;
   grid-template-columns: repeat(var(--tiles), 1fr);
 }
+
+.movable {
+  width: calc(800 / var(--tiles) * 1px);
+  height: calc(800 / var(--tiles) * 1px);
+}
