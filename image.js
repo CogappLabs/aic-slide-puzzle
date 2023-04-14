@@ -1,5 +1,9 @@
 const DEFAULT_IMAGE_WIDTH = 800;
-const N_TILES = 2;
+const MODES = ["Easy", "Medium", "Expert"];
+const N_TILES_OPTIONS = [2, 4, 8];
+const N_TILES =
+  N_TILES_OPTIONS[Math.floor(Math.random() * N_TILES_OPTIONS.length)];
+const MODE = MODES[N_TILES_OPTIONS.findIndex((mode) => mode == N_TILES)];
 const N_ARTWORKS = 100;
 
 const randomInt = (top) => Math.floor(Math.random() * top) + 1;
@@ -242,7 +246,7 @@ const updateProgress = () => {
     disablePuzzle();
     progressEl.innerText = "Puzzle solved! You're free to leave...";
   } else {
-    progressEl.innerText = `${totalSolved} of ${total} tiles are in the right place.`;
+    progressEl.innerText = `${MODE} mode - ${totalSolved} of ${total} tiles are in the right place.`;
   }
 };
 
