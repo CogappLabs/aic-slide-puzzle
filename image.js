@@ -92,7 +92,7 @@ const getImageUrls = async (
 };
 
 const arrayIndexToCoord = (index, n_tiles) =>
-  `${Math.floor(index / n_tiles)},${Math.floor(index % n_tiles)}`;
+  [index % n_tiles, Math.floor(index / n_tiles)].join(",");
 
 const displayTiles = async (image_id, n_tiles) => {
   document.documentElement.style.setProperty("--tiles", n_tiles);
@@ -106,7 +106,7 @@ const displayTiles = async (image_id, n_tiles) => {
   });
 };
 
-const shuffle = () => {
+const shuffle = (n_tiles) => {
   const puzzleEl = document.getElementById("puzzle");
   // remove the last one as we need a blank space
   const movableTile = puzzleEl.lastChild;
@@ -114,9 +114,13 @@ const shuffle = () => {
   movableTile.setAttribute("src", "logo.png");
   movableTile.classList.add("movable");
 
-  Array.from(puzzleEl.childNodes).map((el, i) =>
-    puzzleEl.appendChild(puzzleEl.childNodes[Math.floor(Math.random() * i)])
-  );
+  Array.from(puzzleEl.childNodes).map((el, i) => {
+    puzzleEl.appendChild(puzzleEl.childNodes[Math.floor(Math.random() * i)]);
+  });
+
+  Array.from(puzzleEl.childNodes).map((el, i) => {
+    el.setAttribute("data-current-coord", arrayIndexToCoord(i, n_tiles));
+  });
 };
 
 const initPuzzle = (artworkId, n_tiles) =>
@@ -126,6 +130,6 @@ const initPuzzle = (artworkId, n_tiles) =>
       updateTitle(data.id, data.title, data.artist_id, data.artist_title);
       await displayTiles(data.image_id, n_tiles);
     })
-    .then(shuffle);
+    .then(() => shuffle(n_tiles));
 
 initPuzzle(ARTWORK_IDS[Math.floor(Math.random() * ARTWORK_IDS.length)], 4);
