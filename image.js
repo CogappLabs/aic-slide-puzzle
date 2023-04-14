@@ -1,6 +1,35 @@
 const DEFAULT_IMAGE_WIDTH = 800;
 const N_TILES = 2;
-const ARTWORK_IDS = [80607, 118718, 28560, 229393];
+const N_ARTWORKS = 100;
+
+const randomInt = (top) => Math.floor(Math.random() * top) + 1;
+
+const getRandomArtwork = async (
+  seed,
+  fields = ["id", "title", "artist_id", "artist_title", "image_id"]
+) => {
+  try {
+    const queryParams = new URLSearchParams({ fields });
+    const response = await fetch(
+      `https://api.artic.edu/api/v1/artworks/search?${queryParams.toString()}`,
+      {
+        method: "POST", // or 'PUT'
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          size: 1,
+          from: seed,
+        }),
+      }
+    );
+
+    const result = await response.json();
+    return result.data[0];
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
 
 const artworkUrlById = (
   id,
@@ -160,10 +189,9 @@ const validCandidates = (dragSrcCoord, n_tiles) => {
   return candidates;
 };
 
-const initPuzzle = (artworkId, n_tiles) =>
-  fetch(artworkUrlById(artworkId))
-    .then((response) => response.json())
-    .then(async ({ data }) => {
+const initPuzzle = (seed, n_tiles) =>
+  getRandomArtwork(seed)
+    .then(async (data) => {
       updateTitle(data.id, data.title, data.artist_id, data.artist_title);
       await displayTiles(data.image_id, n_tiles);
     })
@@ -272,10 +300,7 @@ const setupDragLogic = (n_tiles) => {
 };
 
 async function main() {
-  await initPuzzle(
-    ARTWORK_IDS[Math.floor(Math.random() * ARTWORK_IDS.length)],
-    N_TILES
-  );
+  await initPuzzle(randomInt(N_ARTWORKS), N_TILES);
   updateProgress();
   setupDragLogic(N_TILES);
 }
