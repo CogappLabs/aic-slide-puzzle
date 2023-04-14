@@ -101,6 +101,7 @@ const displayTiles = async (image_id, n_tiles) => {
   imageUrls.forEach((src, i) => {
     const imageEl = document.createElement("img");
     imageEl.setAttribute("src", src);
+    imageEl.setAttribute("draggable", false);
     imageEl.setAttribute("data-solved-coord", arrayIndexToCoord(i, n_tiles));
     puzzleEl.appendChild(imageEl);
   });
@@ -112,6 +113,7 @@ const shuffle = (n_tiles) => {
   const movableTile = puzzleEl.lastChild;
   movableTile.setAttribute("data-src", movableTile.src);
   movableTile.setAttribute("src", "logo.png");
+  movableTile.setAttribute("draggable", true);
   movableTile.classList.add("movable");
 
   Array.from(puzzleEl.childNodes).map((el, i) => {

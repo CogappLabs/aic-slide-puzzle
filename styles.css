@@ -91,6 +91,15 @@ main {
   grid-template-columns: repeat(var(--tiles), 1fr);
 }
 
-.movable {
+img {
+  user-select: none;
+}
+
+[draggable="true"] {
+  cursor: grab;
   width: calc(800 / var(--tiles) * 1px);
+}
+
+[draggable="false"] {
+  cursor: not-allowed;
 }
